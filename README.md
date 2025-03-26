@@ -76,6 +76,3 @@
   ```
 
 ### Notes
-- Always **back up the database** before making modifications.
-- Use `.exit` to close SQLite CLI.
-- For large queries, prefer using Python or DB Browser.
