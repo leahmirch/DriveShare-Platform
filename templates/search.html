@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Search for Cars</h2>
+<p>Filter and browse available cars here.</p>
+<form method="GET">
+    <label for="location">Location:</label>
+    <input type="text" id="location" name="location"><br><br>
+
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date"><br><br>
+
+    <button type="submit">Search</button>
+</form>
+{% endblock %}

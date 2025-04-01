@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Leave a Review for Booking #{{ booking_id }}</h2>
+<form method="POST">
+    <label for="rating">Rating (1-5):</label><br>
+    <input type="number" name="rating" min="1" max="5" required><br><br>
+
+    <label for="comment">Comments:</label><br>
+    <textarea name="comment" rows="4" cols="50"></textarea><br><br>
+
+    <button type="submit">Submit Review</button>
+</form>
+{% endblock %}

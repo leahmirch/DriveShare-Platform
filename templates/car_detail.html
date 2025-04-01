@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Car Details</h2>
+<p>Viewing details for Car ID: {{ car_id }}</p>
+
+<ul>
+    <li>Make: Honda</li>
+    <li>Model: Civic</li>
+    <li>Year: 2020</li>
+    <li>Price: $45/day</li>
+</ul>
+
+<a href="{{ url_for('booking', car_id=car_id) }}">Book This Car</a>
+{% endblock %}

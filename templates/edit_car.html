@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Edit Car #{{ car_id }}</h2>
+<form method="POST">
+    <label>Make:</label><br>
+    <input type="text" name="make" value="Toyota"><br><br>
+
+    <label>Model:</label><br>
+    <input type="text" name="model" value="Camry"><br><br>
+
+    <label>Year:</label><br>
+    <input type="number" name="year" value="2020"><br><br>
+
+    <label>Mileage:</label><br>
+    <input type="number" name="mileage" value="25000"><br><br>
+
+    <label>Color:</label><br>
+    <input type="text" name="color" value="Blue"><br><br>
+
+    <label>Price per day:</label><br>
+    <input type="number" name="price" step="0.01" value="45.00"><br><br>
+
+    <label>Location:</label><br>
+    <input type="text" name="location" value="Detroit, MI"><br><br>
+
+    <button type="submit">Save Changes</button>
+</form>
+{% endblock %}

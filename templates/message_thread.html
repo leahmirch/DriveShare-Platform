@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Conversation with User ID: {{ user_id }}</h2>
+<div class="messages">
+    <p><strong>You:</strong> Hi! Is the car still available?</p>
+    <p><strong>User {{ user_id }}:</strong> Yes, it is. Want to book it this weekend?</p>
+</div>
+
+<form method="POST" action="#">
+    <input type="text" name="message" placeholder="Type your message..." required>
+    <button type="submit">Send</button>
+</form>
+{% endblock %}

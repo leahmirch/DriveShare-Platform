@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Welcome to your Dashboard</h2>
+<p>Use the options below to manage your rentals and listings.</p>
+<ul>
+    <li><a href="{{ url_for('list_car') }}">List a New Car</a></li>
+    <li><a href="{{ url_for('manage_cars') }}">Manage My Cars</a></li>
+    <li><a href="{{ url_for('rental_history') }}">View Rental History</a></li>
+    <li><a href="{{ url_for('inbox') }}">Messages</a></li>
+</ul>
+{% endblock %}

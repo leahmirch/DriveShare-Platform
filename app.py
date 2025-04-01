@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask
+from routes import register_routes
 import sqlite3
 
 app = Flask(__name__)
@@ -18,7 +19,7 @@ def init_db():
                 security_q2 TEXT NOT NULL,
                 security_q3 TEXT NOT NULL,
                 full_name TEXT,
-                role TEXT DEFAULT 'user', -- 'user', 'admin' (future-proofing)
+                role TEXT DEFAULT 'user',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         ''')
@@ -43,7 +44,7 @@ def init_db():
             CREATE TABLE IF NOT EXISTS availability (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 car_id INTEGER NOT NULL,
-                date TEXT NOT NULL, -- YYYY-MM-DD
+                date TEXT NOT NULL,
                 is_available BOOLEAN DEFAULT 1,
                 FOREIGN KEY(car_id) REFERENCES cars(id) ON DELETE CASCADE
             );
@@ -55,7 +56,7 @@ def init_db():
                 renter_id INTEGER NOT NULL,
                 start_date TEXT NOT NULL,
                 end_date TEXT NOT NULL,
-                status TEXT DEFAULT 'pending', -- pending, confirmed, cancelled
+                status TEXT DEFAULT 'pending',
                 total_cost REAL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(car_id) REFERENCES cars(id) ON DELETE CASCADE,
@@ -106,7 +107,7 @@ def init_db():
             CREATE TABLE IF NOT EXISTS password_recovery_chain (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
-                step_order INTEGER NOT NULL, -- 1, 2, 3
+                step_order INTEGER NOT NULL,
                 question TEXT NOT NULL,
                 answer TEXT NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -114,27 +115,8 @@ def init_db():
         ''')
         conn.commit()
 
-# Routes
-@app.route('/')
-def home():
-    return render_template("index.html")
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        security_q1 = request.form['security_q1']
-        security_q2 = request.form['security_q2']
-        security_q3 = request.form['security_q3']
-        
-        with sqlite3.connect(DATABASE) as conn:
-            cursor = conn.cursor()
-            cursor.execute("INSERT INTO users (email, password, security_q1, security_q2, security_q3) VALUES (?, ?, ?, ?, ?)",
-                           (email, password, security_q1, security_q2, security_q3))
-            conn.commit()
-        return redirect(url_for('home'))
-    return render_template("register.html")
+# Register routes from routes.py
+register_routes(app)
 
 if __name__ == '__main__':
     init_db()
