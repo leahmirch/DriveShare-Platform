@@ -8,11 +8,20 @@
 </head>
 <body>
     {% include 'navbar.html' %}
+    <div id="notification"></div>
     <main class="content">
         {% block content %}{% endblock %}
     </main>
     <footer>
         <p>&copy; 2025 DriveShare. All rights reserved.</p>
     </footer>
+
+    <script src="{{ url_for('static', filename='js/mediator.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/uiComponent.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/uiMediator.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notificationPanel.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/logout.js') }}"></script>
+
 </body>
 </html>

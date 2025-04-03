@@ -44,3 +44,16 @@ footer {
     bottom: 0;
     width: 100%;
 }
+
+#notification {
+    display: none;
+    background-color: #003366;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    font-weight: bold;
+}
