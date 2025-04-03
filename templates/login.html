@@ -2,7 +2,16 @@
 
 {% block content %}
 <h2>Login to DriveShare</h2>
-<form method="POST" action="{{ url_for('home') }}">
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="flashes">
+      {% for message in messages %}
+        <div class="flash-message">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+<form method="POST" action="{{ url_for('login') }}">
     <label for="email">Email:</label><br>
     <input type="email" id="email" name="email" required><br><br>
 
@@ -10,5 +19,6 @@
     <input type="password" id="password" name="password" required><br><br>
 
     <button type="submit">Login</button>
-</form>
+    <br>
+    <a href="{{ url_for('forgot_password') }}" class="forgot-password-link">Forgot Password?</a>
 {% endblock %}

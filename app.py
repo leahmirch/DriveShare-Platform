@@ -1,8 +1,10 @@
-from flask import Flask
+from flask import Flask, flash, session
 from routes import register_routes
 import sqlite3
+from routes import UserSession
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key_here'  # Change this to a secure random string in production
 
 # Database Initialization
 DATABASE = "database.db"
@@ -115,7 +117,10 @@ def init_db():
         ''')
         conn.commit()
 
-# Register routes from routes.py
+# Global context processor to make UserSession information available in templates
+@app.context_processor
+def inject_user_session():
+    return dict(is_authenticated=UserSession.get_instance().is_authenticated())
 register_routes(app)
 
 if __name__ == '__main__':
