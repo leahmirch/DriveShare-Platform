@@ -1,29 +1,81 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<h2>Edit Car #{{ car_id }}</h2>
-<form method="POST">
-    <label>Make:</label><br>
-    <input type="text" name="make" value="Toyota"><br><br>
+<h2>Edit {{ car.year }} {{ car.make }} {{ car.model }}</h2>
 
-    <label>Model:</label><br>
-    <input type="text" name="model" value="Camry"><br><br>
+<div class="flex-container">
+    <form method="POST" class="edit-form">
+        <label>Make:</label><br>
+        <input type="text" name="make" value="{{ car.make }}" required><br><br>
 
-    <label>Year:</label><br>
-    <input type="number" name="year" value="2020"><br><br>
+        <label>Model:</label><br>
+        <input type="text" name="model" value="{{ car.model }}" required><br><br>
 
-    <label>Mileage:</label><br>
-    <input type="number" name="mileage" value="25000"><br><br>
+        <label>Year:</label><br>
+        <input type="number" name="year" value="{{ car.year }}" required><br><br>
 
-    <label>Color:</label><br>
-    <input type="text" name="color" value="Blue"><br><br>
+        <label>Mileage:</label><br>
+        <input type="number" name="mileage" value="{{ car.mileage }}" required><br><br>
 
-    <label>Price per day:</label><br>
-    <input type="number" name="price" step="0.01" value="45.00"><br><br>
+        <label>Color:</label><br>
+        <input type="text" name="color" value="{{ car.color }}"><br><br>
 
-    <label>Location:</label><br>
-    <input type="text" name="location" value="Detroit, MI"><br><br>
+        <label>Price per day:</label><br>
+        <input type="number" name="price" step="0.01" value="{{ car.price }}" required><br><br>
 
-    <button type="submit">Save Changes</button>
-</form>
+        <label>Location (City, State):</label><br>
+        <input type="text" name="location" value="{{ car.location }}" required><br><br>
+
+        <label>Precise Pickup Address:</label><br>
+        <input type="text" name="precise_location" value="{{ car.precise_location }}"><br><br>
+
+        <button type="submit">Save Changes</button>
+    </form>
+
+    <form method="POST" action="{{ url_for('set_availability', car_id=car.id) }}" class="availability-form">
+        <h3>Block Out Dates</h3>
+        <p>Enter dates when the car is <strong>not available</strong> (comma-separated):</p>
+        <input type="text" name="unavailable_dates" placeholder="e.g. 2025-04-06, 2025-04-09"><br><br>
+        <button type="submit">Save Unavailable Dates</button>
+    </form>
+</div>
+
+<style>
+    .flex-container {
+        display: flex;
+        gap: 40px;
+        align-items: flex-start;
+        margin-top: 20px;
+    }
+
+    .edit-form, .availability-form {
+        flex: 1;
+        max-width: 600px;
+    }
+
+    form label {
+        font-weight: 500;
+    }
+
+    form input {
+        width: 100%;
+        padding: 6px;
+        margin-top: 4px;
+        margin-bottom: 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    button {
+        padding: 8px 12px;
+        border: none;
+        background-color: #2d7dd2;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #195bb3;
+    }
+</style>
 {% endblock %}

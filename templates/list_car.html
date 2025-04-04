@@ -1,29 +1,49 @@
 {% extends 'base.html' %}
-
 {% block content %}
 <h2>List a New Car</h2>
-<form method="POST" action="{{ url_for('dashboard') }}">
+<form method="POST" action="{{ url_for('list_car') }}">
     <label>Make:</label><br>
-    <input type="text" name="make" required><br><br>
-    
+    <input type="text" name="make" required><br>
+
     <label>Model:</label><br>
-    <input type="text" name="model" required><br><br>
+    <input type="text" name="model" required><br>
 
     <label>Year:</label><br>
-    <input type="number" name="year" required><br><br>
+    <input type="number" name="year" required><br>
 
     <label>Mileage:</label><br>
-    <input type="number" name="mileage" required><br><br>
+    <input type="number" name="mileage" required><br>
 
     <label>Color:</label><br>
-    <input type="text" name="color"><br><br>
+    <input type="text" name="color"><br>
 
     <label>Price per day ($):</label><br>
-    <input type="number" name="price" step="0.01" required><br><br>
+    <input type="number" name="price" step="0.01" required><br>
 
-    <label>Location:</label><br>
-    <input type="text" name="location" required><br><br>
+    <label>General Location (City, State):</label><br>
+    <input type="text" name="location" required><br>
+
+    <label>Precise Pickup Address:</label><br>
+    <input type="text" name="precise_location" required><br>
 
     <button type="submit">Submit Car Listing</button>
 </form>
+
+<style>
+    form {
+        max-width: 600px;
+        margin-top: 20px;
+    }
+    label {
+        font-weight: 500;
+    }
+    input {
+        width: 100%;
+        padding: 6px;
+        margin-top: 4px;
+        margin-bottom: 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+</style>
 {% endblock %}

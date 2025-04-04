@@ -2,14 +2,61 @@
 
 {% block content %}
 <h2>Search for Cars</h2>
-<p>Filter and browse available cars here.</p>
-<form method="GET">
-    <label for="location">Location:</label>
-    <input type="text" id="location" name="location"><br><br>
 
-    <label for="date">Date:</label>
-    <input type="date" id="date" name="date"><br><br>
+<form method="GET">
+    <label for="location">Location:</label><br>
+    <input type="text" id="location" name="location" value="{{ location }}"><br><br>
+
+    <label for="date">Date:</label><br>
+    <input type="date" id="date" name="date" value="{{ date }}"><br><br>
+
+    <label for="make">Make:</label><br>
+    <input type="text" id="make" name="make" value="{{ make }}"><br><br>
+
+    <label for="color">Color:</label><br>
+    <input type="text" id="color" name="color" value="{{ color }}"><br><br>
+
+    <label for="min_price">Min Price ($):</label><br>
+    <input type="number" step="0.01" id="min_price" name="min_price" value="{{ min_price }}"><br><br>
+
+    <label for="max_price">Max Price ($):</label><br>
+    <input type="number" step="0.01" id="max_price" name="max_price" value="{{ max_price }}"><br><br>
 
     <button type="submit">Search</button>
 </form>
+
+{% if cars %}
+<h3>Available Cars:</h3>
+<table class="info-table">
+    <tr><th>Make</th><th>Model</th><th>Year</th><th>Mileage</th><th>Price</th><th>Location</th><th></th></tr>
+    {% for car in cars %}
+    <tr>
+        <td>{{ car[3] }}</td>
+        <td>{{ car[2] }}</td>
+        <td>{{ car[4] }}</td>
+        <td>{{ car[5] }}</td>
+        <td>${{ "%.2f"|format(car[7]) }}</td>
+        <td>{{ car[8] }}</td>
+        <td><a href="{{ url_for('car_detail', car_id=car[0]) }}">View</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% elif location or date %}
+<p>No available cars found for your search.</p>
+{% endif %}
+
+<style>
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+.info-table th, .info-table td {
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+.info-table th {
+    background-color: #f0f0f0;
+}
+</style>
 {% endblock %}

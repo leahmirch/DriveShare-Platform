@@ -2,9 +2,57 @@
 
 {% block content %}
 <h2>Rental History</h2>
-<p>This page will show your previous bookings and listings.</p>
-<ul>
-    <li>Jan 2025 - Rented Toyota Corolla - 3 days</li>
-    <li>Feb 2025 - Rented out Honda Accord - 2 days</li>
-</ul>
+
+<h3>Cars You Rented</h3>
+{% if rented_cars %}
+<table class="info-table">
+    <tr>
+        <th>Start</th><th>End</th><th>Car</th><th>Location</th>
+    </tr>
+    {% for rental in rented_cars %}
+    <tr>
+        <td>{{ rental['start_date'] }}</td>
+        <td>{{ rental['end_date'] }}</td>
+        <td>{{ rental['make'] }} {{ rental['model'] }}</td>
+        <td>{{ rental['location'] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>You haven't rented any cars yet.</p>
+{% endif %}
+
+<h3>Cars You Listed (Rented by Others)</h3>
+{% if your_listings %}
+<table class="info-table">
+    <tr>
+        <th>Start</th><th>End</th><th>Car</th><th>Renter</th>
+    </tr>
+    {% for rental in your_listings %}
+    <tr>
+        <td>{{ rental['start_date'] }}</td>
+        <td>{{ rental['end_date'] }}</td>
+        <td>{{ rental['make'] }} {{ rental['model'] }}</td>
+        <td>{{ rental['renter_name'] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No one has rented your cars yet.</p>
+{% endif %}
+
+<style>
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+.info-table th, .info-table td {
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+.info-table th {
+    background-color: #f0f0f0;
+}
+</style>
 {% endblock %}

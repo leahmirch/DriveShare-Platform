@@ -2,9 +2,47 @@
 
 {% block content %}
 <h2>Manage My Cars</h2>
-<p>This is where you will be able to view, update, or remove your car listings.</p>
-<ul>
-    <li>Car #1 - Toyota Corolla - <a href="#">Edit</a> | <a href="#">Remove</a></li>
-    <li>Car #2 - Honda Civic - <a href="#">Edit</a> | <a href="#">Remove</a></li>
-</ul>
+
+{% if cars %}
+<table class="info-table">
+    <tr>
+        <th>Make</th>
+        <th>Model</th>
+        <th>Year</th>
+        <th>Price</th>
+        <th>Actions</th>
+    </tr>
+    {% for car in cars %}
+    <tr>
+        <td>{{ car.make }}</td>
+        <td>{{ car.model }}</td>
+        <td>{{ car.year }}</td>
+        <td>${{ car.price }}</td>
+        <td>
+            <a href="{{ url_for('edit_car', car_id=car.id) }}">Edit</a> |
+            <form method="POST" action="{{ url_for('delete_car', car_id=car.id) }}" style="display:inline;">
+                <button type="submit" onclick="return confirm('Are you sure you want to delete this car?')">Delete</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No cars listed yet.</p>
+{% endif %}
+
+<style>
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+.info-table th, .info-table td {
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+.info-table th {
+    background-color: #f0f0f0;
+}
+</style>
 {% endblock %}

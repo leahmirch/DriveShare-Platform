@@ -1,0 +1,5 @@
+{% macro now() %}
+    {{- caller() -}}
+    {{- namespace(now=namespace(now=cycler().now().utcnow())) -}}
+    {{- now.now -}}
+{% endmacro %}

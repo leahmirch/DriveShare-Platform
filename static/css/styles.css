@@ -57,3 +57,18 @@ footer {
     z-index: 1000;
     font-weight: bold;
 }
+
+.flash-messages {
+    margin: 1rem;
+    padding: 0.5rem;
+}
+  
+.flash {
+    background-color: #e0ffe0;
+    color: #2a7d2a;
+    border: 1px solid #9ddc9d;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 0.2rem;
+}
+  

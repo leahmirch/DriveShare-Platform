@@ -2,14 +2,39 @@
 
 {% block content %}
 <h2>Car Details</h2>
-<p>Viewing details for Car ID: {{ car_id }}</p>
 
-<ul>
-    <li>Make: Honda</li>
-    <li>Model: Civic</li>
-    <li>Year: 2020</li>
-    <li>Price: $45/day</li>
-</ul>
+{% if car %}
+<table class="info-table">
+    <tr><th>Make</th><td>{{ car['make'] }}</td></tr>
+    <tr><th>Model</th><td>{{ car['model'] }}</td></tr>
+    <tr><th>Year</th><td>{{ car['year'] }}</td></tr>
+    <tr><th>Mileage</th><td>{{ car['mileage'] }} miles</td></tr>
+    <tr><th>Color</th><td>{{ car['color'] or 'N/A' }}</td></tr>
+    <tr><th>Price</th><td>${{ "%.2f"|format(car['price']) }}/day</td></tr>
+    <tr><th>Location</th><td>{{ car['location'] }}</td></tr>
+    <tr><th>Pickup Address</th><td>{{ car['precise_location'] }}</td></tr>
+</table>
 
-<a href="{{ url_for('booking', car_id=car_id) }}">Book This Car</a>
+<br>
+<a href="{{ url_for('booking', car_id=car['id']) }}" class="dashboard-button">Book This Car</a>
+{% else %}
+<p>Car not found.</p>
+{% endif %}
+
+<style>
+.info-table {
+    width: 100%;
+    max-width: 500px;
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+.info-table td, .info-table th {
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+.info-table th {
+    background-color: #f0f0f0;
+    text-align: left;
+}
+</style>
 {% endblock %}

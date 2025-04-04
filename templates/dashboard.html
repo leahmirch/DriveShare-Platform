@@ -1,12 +1,49 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Welcome to your Dashboard</h2>
-<p>Use the options below to manage your rentals and listings.</p>
-<ul>
-    <li><a href="{{ url_for('list_car') }}">List a New Car</a></li>
-    <li><a href="{{ url_for('manage_cars') }}">Manage My Cars</a></li>
-    <li><a href="{{ url_for('rental_history') }}">View Rental History</a></li>
-    <li><a href="{{ url_for('inbox') }}">Messages</a></li>
-</ul>
+<h2>Welcome to Your Dashboard</h2>
+<p>Welcome back to DriveShare! Choose what you'd like to do next:</p>
+
+<div class="dashboard-button-group">
+    <form action="{{ url_for('list_car') }}">
+        <button type="submit" class="dashboard-button">List a New Car</button>
+    </form>
+    <form action="{{ url_for('manage_cars') }}">
+        <button type="submit" class="dashboard-button">Manage My Cars</button>
+    </form>
+    <form action="{{ url_for('rental_history') }}">
+        <button type="submit" class="dashboard-button">View Rental History</button>
+    </form>
+    <form action="{{ url_for('inbox') }}">
+        <button type="submit" class="dashboard-button">Messages</button>
+    </form>
+    <form action="{{ url_for('search') }}">
+        <button type="submit" class="dashboard-button">Search for Cars</button>
+    </form>
+</div>
+
+<style>
+.dashboard-button-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.dashboard-button {
+    padding: 10px 20px;
+    background-color: #0051a1;
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.dashboard-button:hover {
+    background-color: #003366;
+}
+</style>
 {% endblock %}

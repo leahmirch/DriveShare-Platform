@@ -36,6 +36,7 @@ def init_db():
                 color TEXT,
                 price REAL NOT NULL,
                 location TEXT NOT NULL,
+                precise_location TEXT,
                 is_available BOOLEAN DEFAULT 1,
                 image_url TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -1,14 +1,66 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<h2>Book Car ID: {{ car_id }}</h2>
-<form method="POST">
-    <label for="start_date">Start Date:</label><br>
-    <input type="date" name="start_date" required><br><br>
+<h2>Book {{ car.make }} {{ car.model }}</h2>
 
-    <label for="end_date">End Date:</label><br>
-    <input type="date" name="end_date" required><br><br>
+<form method="POST" id="booking-form">
+    <label for="start_date">Start Date:</label>
+    <input type="date" name="start_date" id="start_date" required><br><br>
+
+    <label for="end_date">End Date:</label>
+    <input type="date" name="end_date" id="end_date" required><br><br>
+
+    <p><strong>Price:</strong> ${{ "%.2f"|format(car.price) }}/day</p>
+    <p><strong>Estimated Total:</strong> <span id="total_price">$0.00</span></p>
 
     <button type="submit">Confirm Booking</button>
 </form>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const startInput = document.getElementById("start_date");
+    const endInput = document.getElementById("end_date");
+    const totalSpan = document.getElementById("total_price");
+    const pricePerDay = parseFloat("{{ '%.2f' | format(car.price) }}");
+
+    function calculateTotal() {
+        const start = new Date(startInput.value);
+        const end = new Date(endInput.value);
+
+        if (!isNaN(start) && !isNaN(end) && end >= start) {
+            const days = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            const total = (days * pricePerDay).toFixed(2);
+            totalSpan.textContent = `$${total}`;
+        } else {
+            totalSpan.textContent = "$0.00";
+        }
+    }
+
+    startInput.addEventListener("change", calculateTotal);
+    endInput.addEventListener("change", calculateTotal);
+});
+</script>
+
+<style>
+form {
+    max-width: 400px;
+    margin-top: 20px;
+}
+input, button {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+}
+button {
+    background-color: #0051a1;
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+button:hover {
+    background-color: #003366;
+}
+</style>
 {% endblock %}
