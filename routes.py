@@ -3,6 +3,10 @@ import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 
+#import scripts to use for design patterns
+from python_scripts.forgot_pass_cor import PasswordRecoveryManager
+
+
 # Singleton Pattern for Session
 class UserSession:
     _instance = None
@@ -267,31 +271,32 @@ def register_routes(app):
     def forgot_password():
         if request.method == "POST":
             email = request.form["email"]
-            new_password = request.form["new_password"]  # Assume the form includes a new_password field
-
-            # Retrieve security question answers from the form
-            answer1 = request.form.get("security_q1", "")
-            answer2 = request.form.get("security_q2", "")
-            answer3 = request.form.get("security_q3", "")
+            new_password = request.form["new_password"]
+            input_answers = [
+                request.form.get("security_q1", ""),
+                request.form.get("security_q2", ""),
+                request.form.get("security_q3", "")
+            ]
 
             try:
                 with sqlite3.connect("database.db") as conn:
                     cursor = conn.cursor()
-                    # Fetch stored security questions for the user
                     cursor.execute("SELECT security_q1, security_q2, security_q3 FROM users WHERE email = ?", (email,))
                     user = cursor.fetchone()
 
-                    if user and user == (answer1, answer2, answer3):
-                        # If security answers match, update the password
-                        hashed_password = generate_password_hash(new_password)
-                        cursor.execute("UPDATE users SET password = ? WHERE email = ?", (hashed_password, email))
-                        conn.commit()
-
-                        flash("Password reset successful! Please log in with your new password.")
-                        return redirect(url_for("login"))
+                    if user:
+                        recovery_manager = PasswordRecoveryManager()
+                        if recovery_manager.recover_password(input_answers, list(user)):
+                            hashed_password = generate_password_hash(new_password)
+                            cursor.execute("UPDATE users SET password = ? WHERE email = ?", (hashed_password, email))
+                            conn.commit()
+                            flash("Password reset successful. Please log in.")
+                            return redirect(url_for("login"))
+                        else:
+                            flash("Security answers do not match. Try again.")
                     else:
-                        flash("Security answers do not match. Please try again.")
-            
+                        flash("No user found with that email.")
+
             except Exception as e:
                 flash(f"Error: {str(e)}")
 
