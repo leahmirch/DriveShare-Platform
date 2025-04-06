@@ -2,9 +2,36 @@
 
 {% block content %}
 <h2>Your Messages</h2>
-<p>All communication with renters and owners will appear here.</p>
-<ul>
-    <li><a href="#">Alice - Re: Honda Civic availability</a></li>
-    <li><a href="#">Bob - Confirmed Booking Details</a></li>
-</ul>
+<button onclick="openSendMessagePopup()">Send Message</button>
+
+<div class="inbox-list">
+    {% for message in messages %}
+    <div class="inbox-item" onclick="openMessagePopup('{{ message.sender_id }}')">
+        <strong>{{ message['sender_name']}}</strong>
+        <span style="float: right;">{{message['timestamp']}}</span>
+        <p>{{message['content'][:50]}}...</p>
+    </div>
+    {% endfor %}
+</div>
+
+<div id="sendMessagePopup" class="popup">
+    <div class="popup-content">
+        <span class="close" onclick="closeSendMessagePopup()">&times;</span>
+        <form method="POST" id="sendMessageForm" onsubmit="return sendMessage();">
+            <input type="text" name="receiver_name" placeholder="Receiver Username" required>
+            <textarea name="message" placeholder="Type your message..." required></textarea>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+</div>
+
+<div id="messagePopup" class="popup">
+    <div class="popup-content">
+        <span class="close" onclick="closeMessagePopup()">&times;</span>
+        <iframe id="messageFrame" style="width:100%; height:300px;"></iframe>
+    </div>
+</div>   
+
+<script src="{{ url_for('static', filename='js/scripts.js') }}" defer></script>
+
 {% endblock %}

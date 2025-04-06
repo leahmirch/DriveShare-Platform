@@ -307,7 +307,25 @@ def register_routes(app):
         if not UserSession.get_instance().is_authenticated():
             flash("Please log in to access your inbox.")
             return redirect(url_for("login"))
-        return render_template("inbox.html")
+        user_id = UserSession.get_instance().user_id
+        messages = []
+
+        try: 
+            with sqlite3.connect("database.db") as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT m.id, m.sender_id, m.receiver_id, m.content, m.timestamp, u.full_name AS sender_name
+                    FROM messages m 
+                    JOIN users u ON m.sender_id = u.id
+                    WHERE m.receiver_id = ? OR m.sender_id = ?
+                    ORDER BY m.timestamp DESC                               
+                ''', (user_id, user_id))
+                messages = cursor.fetchall()
+        except Exception as e:
+            flash(f"Error retrieving messages: {str(e)}")
+                
+        return render_template("inbox.html", messages=messages)
 
     @app.route("/list_car", methods=["GET", "POST"])
     def list_car():
@@ -476,7 +494,69 @@ def register_routes(app):
 
     @app.route("/messages/<int:user_id>")
     def message_thread(user_id):
-        return render_template("message_thread.html", user_id=user_id)
+        if not UserSession.get_instance().is_authenticated():
+            flash("Please log in to view messages.")
+            return redirect(url_for("login"))
+        sender_id = UserSession.get_instance().user_id
+        messages = []
+        try:
+            with sqlite3.connect("database.db") as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT m.content, m.timestamp, u.full_name AS sender_name
+                    FROM messages m
+                    JOIN users u ON m.sender_id = u.id
+                    WHERE (m.sender_id = ? AND m.receiver_id = ?)
+                    OR (m.sender_id = ? AND m.receiver_id = ?)
+                    ORDER BY m.timestamp
+                ''', (sender_id, user_id, user_id, sender_id))
+                messages= cursor.fetchall()
+        except Exception as e:
+            flash(f"Error retrieving messages: {str(e)}")
+        return render_template("message_thread.html", user_id=user_id, messages=messages)
+    
+    @app.route("/send_message/<int:receiver_id>", methods=["GET", "POST"])
+    def send_message(receiver_id):
+        if not UserSession.get_instance().is_authenticated():
+            flash("Please log in to send messages.")
+            return redirect(url_for("login"))
+        sender_id = UserSession.get_instance().user_id
+        content = request.form.get("message", "")
+
+        if not content:
+            flash("Message content cannot be empty.")
+            return redirect(url_for("inbox"))
+        
+        try:
+            with sqlite3.connect("database.db") as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO messages (sender_id, receiver_id, content)
+                    VALUES (?, ?, ?)
+                ''', (sender_id, receiver_id, content))
+                conn.commit()
+            
+            flash("Message sent!")
+        except Exception as e:
+            flash(f"Error sending message: {str(e)}")
+        return redirect(url_for("inbox"))
+    
+    @app.route("/get_user_id/<username>")
+    def get_user_id(username):
+        try:
+            with sqlite3.connect("database.db") as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT id FROM users WHERE full_name = ?", (username,))
+                user = cursor.fetchone()
+                if user:
+                    return {"user_id": user[0]}
+                else:
+                    return {"error": "User not found"}, 404
+        except Exception as e:
+            return {"error": str(e)}, 500
+
+                
 
     @app.route("/payment/<int:booking_id>", methods=["GET", "POST"])
     def payment(booking_id):
