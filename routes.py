@@ -543,9 +543,9 @@ def register_routes(app):
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
-                # Rentals made by this user
+                # Rentals made by this user (SOUAD ADDED booking_id!)
                 cursor.execute('''
-                    SELECT b.start_date, b.end_date, c.make, c.model, c.location
+                    SELECT b.id AS booking_id, b.start_date, b.end_date, c.make, c.model, c.location
                     FROM bookings b
                     JOIN cars c ON b.car_id = c.id
                     WHERE b.renter_id = ?
@@ -555,13 +555,14 @@ def register_routes(app):
 
                 # Bookings on this user's listed cars
                 cursor.execute('''
-                    SELECT b.start_date, b.end_date, u.full_name AS renter_name, c.make, c.model
+                    SELECT b.id AS booking_id, b.start_date, b.end_date, u.full_name AS renter_name, c.make, c.model
                     FROM bookings b
                     JOIN cars c ON b.car_id = c.id
                     JOIN users u ON b.renter_id = u.id
                     WHERE c.owner_id = ?
                 ''', (user_id,))
                 your_listings = cursor.fetchall()
+
 
         except Exception as e:
             flash(f"Could not retrieve rental history: {str(e)}")
@@ -570,16 +571,124 @@ def register_routes(app):
 
     @app.route("/review/<int:booking_id>", methods=["GET", "POST"])
     def review(booking_id):
+        if not UserSession.get_instance().is_authenticated():
+            flash("Please log in to leave a review.")
+            return redirect(url_for("login"))
+
         if request.method == "POST":
-            return redirect(url_for("dashboard"))
+            rating = request.form["rating"]
+            comment = request.form["comment"]
+            reviewer_id = UserSession.get_instance().user_id
+
+            try:
+                with sqlite3.connect("database.db") as conn:
+                    cursor = conn.cursor()
+
+                    # Validate that user made this booking
+                    cursor.execute('''
+                        SELECT c.owner_id
+                        FROM bookings b
+                        JOIN cars c ON b.car_id = c.id
+                        WHERE b.id = ? AND b.renter_id = ?
+                    ''', (booking_id, reviewer_id))
+                    row = cursor.fetchone()
+
+                    if not row:
+                        flash("Invalid booking or you are not allowed to review this.")
+                        return redirect(url_for("dashboard"))
+
+                    reviewee_id = row[0]
+
+                    cursor.execute('''
+                        INSERT INTO reviews (booking_id, reviewer_id, reviewee_id, rating, comment)
+                        VALUES (?, ?, ?, ?, ?)
+                    ''', (booking_id, reviewer_id, reviewee_id, rating, comment))
+                    conn.commit()
+
+                    flash("Review submitted!")
+                    return redirect(url_for("dashboard"))
+
+            except Exception as e:
+                flash(f"Error: {str(e)}")
+                return redirect(url_for("dashboard"))
+
+        # Always return something in GET mode
         return render_template("review.html", booking_id=booking_id)
+
+
+    @app.route("/review_renter/<int:booking_id>", methods=["GET", "POST"])
+    def review_renter(booking_id):
+        if not UserSession.get_instance().is_authenticated():
+            flash("Please log in to leave a review.")
+            return redirect(url_for("login"))
+
+        if request.method == "POST":
+            rating = request.form["rating"]
+            comment = request.form["comment"]
+            reviewer_id = UserSession.get_instance().user_id  # the owner
+
+            try:
+                with sqlite3.connect("database.db") as conn:
+                    cursor = conn.cursor()
+
+                    # Validate booking belongs to a car owned by this user
+                    cursor.execute('''
+                        SELECT b.renter_id
+                        FROM bookings b
+                        JOIN cars c ON b.car_id = c.id
+                        WHERE b.id = ? AND c.owner_id = ?
+                    ''', (booking_id, reviewer_id))
+                    row = cursor.fetchone()
+
+                    if not row:
+                        flash("You are not authorized to review this renter.")
+                        return redirect(url_for("dashboard"))
+
+                    reviewee_id = row[0]
+
+                    cursor.execute('''
+                        INSERT INTO reviews (booking_id, reviewer_id, reviewee_id, rating, comment)
+                        VALUES (?, ?, ?, ?, ?)
+                    ''', (booking_id, reviewer_id, reviewee_id, rating, comment))
+                    conn.commit()
+
+                    flash("Review for renter submitted!")
+                    return redirect(url_for("dashboard"))
+
+            except Exception as e:
+                flash(f"Error: {str(e)}")
+                return redirect(url_for("dashboard"))
+
+        return render_template("review.html", booking_id=booking_id)
+        # IDK IF I SHOULD MAKE SEP REVIEW PAGE: return render_template("review_owner.html", booking_id=booking_id)
+
 
     @app.route("/reviews_received")
     def reviews_received():
         if not UserSession.get_instance().is_authenticated():
-            flash("Please log in to view reviews received.")
+            flash("Please log in to view reviews.")
             return redirect(url_for("login"))
-        return render_template("reviews_received.html")
+
+        user_id = UserSession.get_instance().user_id
+        reviews = []
+
+        try:
+            with sqlite3.connect("database.db") as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT r.rating, r.comment, r.timestamp, u.full_name AS reviewer_name
+                    FROM reviews r
+                    JOIN users u ON r.reviewer_id = u.id
+                    WHERE r.reviewee_id = ?
+                    ORDER BY r.timestamp DESC
+                ''', (user_id,))
+                reviews = cursor.fetchall()
+
+        except Exception as e:
+            flash(f"Error fetching reviews: {str(e)}")
+        return render_template("reviews_received.html", reviews=reviews)
+
 
     @app.route("/search")
     def search():

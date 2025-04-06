@@ -2,8 +2,17 @@
 
 {% block content %}
 <h2>Reviews About You</h2>
+{% if reviews %}
 <ul>
-    <li>⭐️⭐️⭐️⭐️⭐️ – “Fantastic car and great communication!”</li>
-    <li>⭐️⭐️⭐️⭐️ – “Easy pickup and dropoff.”</li>
+  {% for review in reviews %}
+    <li>
+      <strong>{{ review["reviewer_name"] }}</strong><br>
+      ⭐️ {{ review["rating"] }}/5 – {{ review["comment"] }}<br>
+      <em>{{ review["timestamp"] }}</em>
+    </li>
+  {% endfor %}
 </ul>
+{% else %}
+<p>No reviews yet.</p>
+{% endif %}
 {% endblock %}
