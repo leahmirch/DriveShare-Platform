@@ -4,7 +4,7 @@ import sqlite3
 from routes import UserSession
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  # Change this to a secure random string in production
+app.secret_key = 'key_here' 
 
 # Database Initialization
 DATABASE = "database.db"
@@ -22,6 +22,7 @@ def init_db():
                 security_q3 TEXT NOT NULL,
                 full_name TEXT,
                 role TEXT DEFAULT 'user',
+                balance REAL DEFAULT 0.0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         ''')
@@ -118,7 +119,6 @@ def init_db():
         ''')
         conn.commit()
 
-# Global context processor to make UserSession information available in templates
 @app.context_processor
 def inject_user_session():
     return dict(is_authenticated=UserSession.get_instance().is_authenticated())

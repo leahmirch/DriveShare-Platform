@@ -4,6 +4,7 @@
     </div>
     <div class="nav-right">
         {% if is_authenticated %}
+            <a href="{{ url_for('profile') }}">Profile</a>
             <a href="{{ url_for('dashboard') }}">Dashboard</a>
             <a href="{{ url_for('logout') }}">Logout</a>
         {% else %}
