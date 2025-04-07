@@ -2,15 +2,23 @@
 
 {% block content %}
 <h2>Conversation with User ID: {{ user_id }}</h2>
+<a href="{{ url_for('inbox') }}" class="btn">Back to Inbox</a>
+
 <div class="messages">
-    {% for message in messages %}
-    <p><strong> {{message['sender_name']}}:</strong> {{message['content']}}</p>
-    <p><em> {{message['timestamp']}}</em></p>
-    {% endfor %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message-item">
+                <p><strong>{{ message['sender_name'] }}:</strong> {{ message['content'] }}</p>
+                <p><em>{{ message['timestamp'] }}</em></p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No messages in this conversation yet.</p>
+    {% endif %}
 </div>
 
-<form method="POST" action="{{url_for('send_message', receiver_id=user_id)}}">
-    <textarea name="message" placeholder="Type your message..." required></textarea>
-    <button type="submit">Send</button>
+<form method="POST" action="{{ url_for('send_reply', receiver_id=user_id) }}">
+    <textarea name="message" placeholder="Type your reply..." required></textarea>
+    <button type="submit">Reply</button>
 </form>
 {% endblock %}

@@ -314,14 +314,28 @@ def register_routes(app):
             with sqlite3.connect("database.db") as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
+
+                # Received messages
                 cursor.execute('''
                     SELECT m.id, m.sender_id, m.receiver_id, m.content, m.timestamp, u.full_name AS sender_name
                     FROM messages m 
                     JOIN users u ON m.sender_id = u.id
-                    WHERE m.receiver_id = ? OR m.sender_id = ?
+                    WHERE m.receiver_id = ?
                     ORDER BY m.timestamp DESC                               
-                ''', (user_id, user_id))
-                messages = cursor.fetchall()
+                ''', (user_id,))
+                inbox_messages = cursor.fetchall()
+                
+                # Sent messages
+                cursor.execute('''
+                    SELECT m.id, m.sender_id, m.receiver_id, m.content, m.timestamp, u.full_name AS receiver_name
+                    FROM messages m
+                    JOIN users u ON m.receiver_id = u.id
+                    WHERE m.sender_id = ?
+                    ORDER BY m.timestamp DESC 
+                    ''', (user_id,))
+                sent_messages = cursor.fetchall()
+                
+            return render_template("inbox.html", inbox_messages=inbox_messages, sent_messages=sent_messages)
         except Exception as e:
             flash(f"Error retrieving messages: {str(e)}")
                 
@@ -497,21 +511,23 @@ def register_routes(app):
         if not UserSession.get_instance().is_authenticated():
             flash("Please log in to view messages.")
             return redirect(url_for("login"))
-        sender_id = UserSession.get_instance().user_id
-        messages = []
+        current_user_id = UserSession.get_instance().user_id
         try:
             with sqlite3.connect("database.db") as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
+
                 cursor.execute('''
-                    SELECT m.content, m.timestamp, u.full_name AS sender_name
+                    SELECT m.id, m.sender_id, m.receiver_id, m.content, m.timestamp, u.full_name AS sender_name
                     FROM messages m
                     JOIN users u ON m.sender_id = u.id
                     WHERE (m.sender_id = ? AND m.receiver_id = ?)
                     OR (m.sender_id = ? AND m.receiver_id = ?)
-                    ORDER BY m.timestamp
-                ''', (sender_id, user_id, user_id, sender_id))
+                    ORDER BY m.timestamp ASC
+                ''', (current_user_id, user_id, user_id, current_user_id))
                 messages= cursor.fetchall()
+
+            return render_template("message_thread.html", user_id=user_id, messages=messages)
         except Exception as e:
             flash(f"Error retrieving messages: {str(e)}")
         return render_template("message_thread.html", user_id=user_id, messages=messages)
@@ -537,10 +553,35 @@ def register_routes(app):
                 ''', (sender_id, receiver_id, content))
                 conn.commit()
             
-            flash("Message sent!")
+            flash("Message sent successfully!")
         except Exception as e:
             flash(f"Error sending message: {str(e)}")
         return redirect(url_for("inbox"))
+    
+    @app.route("/send_reply/<int:receiver_id>", methods=["POST"])
+    def send_reply(receiver_id):
+        if not UserSession.get_instance().is_authenticated():
+            flash("Please log in to reply to messages.")
+            return redirect(url_for("login"))
+        sender_id = UserSession.get_instance().user_id
+        content = request.form.get("message", "")
+
+        if not content:
+            flash("Message content cannot be empty.")
+            return redirect(url_for("message_thread", user_id=receiver_id))
+    
+        try: 
+            with sqlite3.connect("database.db") as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO messages (sender_id, receiver_id, content)
+                    VALUES (?, ?, ?)
+                ''',(sender_id, receiver_id, content))
+                conn.commit()
+            flash("Reply sent!")
+        except Exception as e:
+            flash(f"Error sending reply: {str(e)}")
+        return redirect(url_for("message_thread", user_id=receiver_id))
     
     @app.route("/get_user_id/<username>")
     def get_user_id(username):
@@ -556,7 +597,22 @@ def register_routes(app):
         except Exception as e:
             return {"error": str(e)}, 500
 
-                
+    @app.route("/delete_message/<int:message_id>", methods=["POST"])
+    def delete_message(message_id):
+        if not UserSession.get_instance().is_authenticated():
+            flash("Please log in to delete messages.")
+            return redirect(url_for("login"))
+
+        try:
+            with sqlite3.connect("database.db") as conn:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM messages WHERE id = ?", (message_id,))
+                conn.commit()
+                flash("Message deleted successfully.")
+        except Exception as e:
+            flash(f"Error deleting message: {str(e)}")
+
+        return redirect(url_for("inbox"))
 
     @app.route("/payment/<int:booking_id>", methods=["GET", "POST"])
     def payment(booking_id):

@@ -2,35 +2,67 @@
 
 {% block content %}
 <h2>Your Messages</h2>
-<button onclick="openSendMessagePopup()">Send Message</button>
 
-<div class="inbox-list">
-    {% for message in messages %}
-    <div class="inbox-item" onclick="openMessagePopup('{{ message.sender_id }}')">
-        <strong>{{ message['sender_name']}}</strong>
-        <span style="float: right;">{{message['timestamp']}}</span>
-        <p>{{message['content'][:50]}}...</p>
-    </div>
-    {% endfor %}
+<div style="margin-bottom: 15px;">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+    <button onclick="openSendMessagePopup()" class="btn btn-success" style="margin-left: 10px;">Send Message</button>
 </div>
 
-<div id="sendMessagePopup" class="popup">
+<h3>Inbox</h3>
+{% if inbox_messages %}
+    <div class="message-list">
+        {% for message in inbox_messages %}
+                <strong>From:</strong>
+                <a href="{{ url_for('message_thread', user_id=message['sender_id']) }}" class="message-link">
+                    <strong>{{ message['sender_name'] }}</strong>
+                </a>
+                <span>{{ message['timestamp'] }}</span>
+                <p>{{ message['content'] }}</p>
+
+                <form method="POST" action="{{ url_for('delete_message', message_id=message.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this message?');">Delete</button>
+                </form>
+            </div>
+            <hr>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No received messages.</p>
+{% endif %}
+
+<h3>Sent</h3>
+{% if sent_messages %}
+    <div class="message-list">
+        {% for message in sent_messages %}
+            <div class="message-item">
+                <strong>To:</strong>
+                <a href="{{url_for('message_thread', user_id=message['receiver_id'])}}" class="message-link">
+                    <strong>{{ message['receiver_name'] }}</strong>
+                </a>
+                <span>{{ message['timestamp'] }}</span>
+                <p>{{ message['content'] }}</p>
+
+                <form method="POST" action="{{ url_for('delete_message', message_id=message.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this message?');">Delete</button>
+                </form>
+            </div>
+            <hr>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No sent messages.</p>
+{% endif %}
+
+<div id="sendMessagePopup" class="popup" style="display:none;">
     <div class="popup-content">
         <span class="close" onclick="closeSendMessagePopup()">&times;</span>
         <form method="POST" id="sendMessageForm" onsubmit="return sendMessage();">
             <input type="text" name="receiver_name" placeholder="Receiver Username" required>
             <textarea name="message" placeholder="Type your message..." required></textarea>
-            <button type="submit">Send</button>
+            <button type="submit" class="btn btn-success">Send</button>
         </form>
     </div>
 </div>
-
-<div id="messagePopup" class="popup">
-    <div class="popup-content">
-        <span class="close" onclick="closeMessagePopup()">&times;</span>
-        <iframe id="messageFrame" style="width:100%; height:300px;"></iframe>
-    </div>
-</div>   
 
 <script src="{{ url_for('static', filename='js/scripts.js') }}" defer></script>
 

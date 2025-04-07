@@ -42,11 +42,16 @@ function closeSendMessagePopup() {
     document.getElementById('sendMessagePopup').style.display = 'none';
 }
 
-function openMessagePopup(user_id){
-    document.getElementById('messagePopup').style.display = 'block';
-    document.getElementById('messageFrame').src = `/messages/${user_id}`;
-}
-
-function closeMessagePopup(){
-    document.getElementById("messagePopup").style.display = 'none';
+function markAsRead(messageId, element) {
+    fetch(`/mark_read/${messageId}`, {
+        method: 'POST'
+    })
+    .then(response => {
+        if (response.ok) {
+            element.classList.remove('unread');
+        } else {
+            console.error("Failed to mark message as read");
+        }
+    })
+    .catch(error => console.error("Error marking message as read:", error));
 }
