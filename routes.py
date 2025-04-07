@@ -1,7 +1,8 @@
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, session
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
+from python_scripts.payment_proxy import PaymentProxy
 
 #import scripts to use for design patterns
 from python_scripts.forgot_pass_cor import PasswordRecoveryManager
@@ -175,16 +176,17 @@ def register_routes(app):
                     days = len(selected_dates)
                     total_cost = round(days * car["price"], 2)
 
-                    cursor.execute('''
-                        INSERT INTO bookings (car_id, renter_id, start_date, end_date, total_cost, status)
-                        VALUES (?, ?, ?, ?, ?, 'confirmed')
-                    ''', (car_id, renter_id, start_date, end_date, total_cost))
-                    conn.commit()
+                    # Save to session and redirect to payment
+                    session["pending_booking"] = {
+                        "car_id": car_id,
+                        "renter_id": renter_id,
+                        "owner_id": car["owner_id"],
+                        "start_date": start_date,
+                        "end_date": end_date,
+                        "total_cost": total_cost
+                    }
 
-                    print("NotifyObserver: Booking confirmed.")
-
-                flash("Booking confirmed!")
-                return redirect(url_for("dashboard"))
+                    return redirect(url_for("payment", booking_id="pending"))
 
             except Exception as e:
                 flash(f"Error during booking: {str(e)}")
@@ -554,29 +556,129 @@ def register_routes(app):
                 else:
                     return {"error": "User not found"}, 404
         except Exception as e:
-            return {"error": str(e)}, 500
-
-                
-
-    @app.route("/payment/<int:booking_id>", methods=["GET", "POST"])
+            return {"error": str(e)}, 500      
+        
+    @app.route("/payment/<booking_id>", methods=["GET", "POST"])
     def payment(booking_id):
-        if request.method == "POST":
-            return redirect(url_for("payment_success"))
-        return render_template("payment.html", booking_id=booking_id)
+        if booking_id != "pending":
+            flash("Invalid booking ID.")
+            return redirect(url_for("dashboard"))
 
-    @app.route("/payment_success")
-    def payment_success():
-        return render_template("payment_success.html")
+        pending = session.get("pending_booking")
+        if not pending:
+            flash("No booking in progress.")
+            return redirect(url_for("dashboard"))
+
+        try:
+            with sqlite3.connect("database.db") as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute("SELECT balance FROM users WHERE id = ?", (pending["renter_id"],))
+                row = cursor.fetchone()
+                if not row:
+                    flash("User not found.")
+                    return redirect(url_for("dashboard"))
+
+                balance = row["balance"]
+                amount_due = pending["total_cost"]
+
+                if request.method == "POST":
+                    if balance < amount_due:
+                        flash("Insufficient balance. Please add funds in your profile.")
+                        return redirect(url_for("profile"))
+
+                    # Deduct funds
+                    cursor.execute("UPDATE users SET balance = balance - ? WHERE id = ?", (amount_due, pending["renter_id"]))
+
+                    # Insert booking
+                    cursor.execute('''
+                        INSERT INTO bookings (car_id, renter_id, start_date, end_date, total_cost, status)
+                        VALUES (?, ?, ?, ?, ?, 'confirmed')
+                    ''', (
+                        pending["car_id"],
+                        pending["renter_id"],
+                        pending["start_date"],
+                        pending["end_date"],
+                        amount_due
+                    ))
+
+                    conn.commit()
+
+                    # Execute payment via proxy (optional design pattern hook)
+                    proxy = PaymentProxy()
+                    proxy.pay(
+                        payer_id=pending["renter_id"],
+                        receiver_id=pending["owner_id"],
+                        amount=amount_due
+                    )
+
+                    session.pop("pending_booking", None)
+                    flash(f"Payment of ${amount_due:.2f} successful! Remaining balance: ${balance - amount_due:.2f}")
+                    return redirect(url_for("dashboard"))
+
+                return render_template("payment.html", booking_id="pending", amount=amount_due, balance=balance)
+
+        except Exception as e:
+            flash(f"Payment failed: {str(e)}")
+            return redirect(url_for("dashboard"))
+    
+    @app.route("/add_funds", methods=["POST"])
+    def add_funds():
+        if not UserSession.get_instance().is_authenticated():
+            flash("Please log in first.")
+            return redirect(url_for("login"))
+
+        user_id = UserSession.get_instance().user_id
+        try:
+            amount = float(request.form["amount"])
+            if amount <= 0:
+                raise ValueError("Amount must be positive.")
+
+            with sqlite3.connect("database.db") as conn:
+                cursor = conn.cursor()
+                cursor.execute("UPDATE users SET balance = balance + ? WHERE id = ?", (amount, user_id))
+                conn.commit()
+
+            flash(f"Successfully added ${amount:.2f} to your wallet.")
+        except Exception as e:
+            flash(f"Error adding funds: {str(e)}")
+
+        return redirect(url_for("profile"))
     
     @app.route("/profile", methods=["GET", "POST"])
     def profile():
         if not UserSession.get_instance().is_authenticated():
             flash("Please log in to view your profile.")
             return redirect(url_for("login"))
-            
+
+        user_id = UserSession.get_instance().user_id
+
         if request.method == "POST":
+            full_name = request.form["full_name"]
+            try:
+                with sqlite3.connect("database.db") as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("UPDATE users SET full_name = ? WHERE id = ?", (full_name, user_id))
+                    conn.commit()
+                flash("Profile updated successfully.")
+            except Exception as e:
+                flash(f"Error updating profile: {str(e)}")
+            return redirect(url_for("profile"))
+
+        try:
+            with sqlite3.connect("database.db") as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute("SELECT full_name, email, balance FROM users WHERE id = ?", (user_id,))
+                user = cursor.fetchone()
+                if not user:
+                    flash("User not found.")
+                    return redirect(url_for("dashboard"))
+        except Exception as e:
+            flash(f"Error retrieving profile: {str(e)}")
             return redirect(url_for("dashboard"))
-        return render_template("profile.html")
+
+        return render_template("profile.html", user=user)
 
     @app.route("/register", methods=["GET", "POST"])
     def register():
@@ -594,9 +696,9 @@ def register_routes(app):
                 with sqlite3.connect("database.db") as conn:
                     cursor = conn.cursor()
                     cursor.execute('''
-                        INSERT INTO users (email, password, security_q1, security_q2, security_q3, full_name)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    ''', (email, hashed_password, q1, q2, q3, full_name))
+                        INSERT INTO users (email, password, security_q1, security_q2, security_q3, full_name, balance)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ''', (email, hashed_password, q1, q2, q3, full_name, 0.0))
                     conn.commit()
                 
                 flash("Registration successful! Please log in.")

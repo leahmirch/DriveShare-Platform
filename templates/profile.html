@@ -2,16 +2,25 @@
 
 {% block content %}
 <h2>Your Profile</h2>
+
 <form method="POST">
     <label>Full Name:</label><br>
-    <input type="text" name="full_name" value="John Doe"><br><br>
+    <input type="text" name="full_name" value="{{ user.full_name }}"><br><br>
 
     <label>Email:</label><br>
-    <input type="email" name="email" value="john@example.com"><br><br>
-
-    <label>Role:</label><br>
-    <input type="text" name="role" value="user" disabled><br><br>
+    <input type="email" name="email" value="{{ user.email }}" disabled><br><br>
 
     <button type="submit">Update Profile</button>
+</form>
+
+<hr>
+<p></p>
+<h3>Wallet</h3>
+<p><strong>Current Balance:</strong> ${{ "%.2f"|format(user.balance or 0) }}</p>
+
+<form method="POST" action="{{ url_for('add_funds') }}">
+    <label>Add Funds:</label><br>
+    <input type="number" name="amount" step="0.01" min="1" required>
+    <button type="submit">Add</button>
 </form>
 {% endblock %}
