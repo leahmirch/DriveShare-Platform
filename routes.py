@@ -660,7 +660,7 @@ def register_routes(app):
 
         return redirect(url_for("inbox"))
 
-    @app.route("/payment/<int:booking_id>", methods=["GET", "POST"])
+    @app.route("/payment/<booking_id>", methods=["GET", "POST"])
     def payment(booking_id):
         if booking_id != "pending":
             flash("Invalid booking ID.")
