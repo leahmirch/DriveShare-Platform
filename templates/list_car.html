@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
+<a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
 <h2>List a New Car</h2>
 <form method="POST" action="{{ url_for('list_car') }}">
     <label>Make:</label><br>

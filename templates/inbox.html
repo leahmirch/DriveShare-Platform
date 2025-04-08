@@ -1,12 +1,11 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Your Messages</h2>
 
-<div style="margin-bottom: 15px;">
-    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
-    <button onclick="openSendMessagePopup()" class="btn btn-success" style="margin-left: 10px;">Send Message</button>
-</div>
+<a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+
+<h2>Your Messages</h2>
+<button onclick="openSendMessagePopup()">Send Message</button>
 
 <h3>Inbox</h3>
 {% if inbox_messages %}

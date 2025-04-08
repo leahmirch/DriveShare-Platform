@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
 <h2>Reviews About You</h2>
 {% if reviews %}
 <ul>

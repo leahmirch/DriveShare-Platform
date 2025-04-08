@@ -1,7 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>Welcome to DriveShare</h1>
-    <p>DriveShare is a peer-to-peer car rental platform where car owners and renters connect directly.</p>
-    <a href="{{ url_for('search') }}" class="btn">Search for Cars</a>
+<section class="main-car">
+    <img src="{{url_for('static', filename='img/car.webp')}}" alt="Car Image" class="car-image">
+    <div class="main-text">
+        <h1>Welcome to DriveShare!</h1>
+        <h4>DriveShare is a peer-to-peer car rental platform where car owners and renters connect directly.</h4>
+        <a href="{{ url_for('search') }}" class="btn_url">Search for Cars</a> 
+    </div>
+</section>
 {% endblock %}

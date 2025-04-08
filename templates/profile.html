@@ -1,7 +1,16 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Your Profile</h2>
+<div style="margin-bottom: 10px;">
+<a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+</div>
+
+<section class="profile-header">
+    <img src="{{url_for('static', filename='img/default_user.png')}}" alt="Default" class="profile-pic">
+    <div class="profile-info">
+        <h2>Your Profile</h2>
+    </div>
+</section>
 
 <form method="POST">
     <label>Full Name:</label><br>
