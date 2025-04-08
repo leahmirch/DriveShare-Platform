@@ -96,14 +96,46 @@ class CarBuilder:
     def build(self):
         return Car(**self._car_data)
 
+# Observer Pattern for Booking Notifications
 
+class BookingSubject:
+    def __init__(self):
+        self._observers = []
+    
+    def attach(self, observer):
+        if observer not in self._observers:
+            self._observers.append(observer)
+    
+    def detach(self, observer):
+        self._observers.remove(observer)
+    
+    def notify(self, message, user_id):
+        for observer in self._observers:
+            observer.update(message, user_id)
 
+class Observer:
+    def update(self, message, user_id):
+        raise NotImplementedError("Subclasses must override this method")
+    
+class InAppNotification(Observer):
+    def update(self, message, user_id):
+        with sqlite3.connect("database.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO notifications (user_id, message, timestamp, is_read)
+                VALUES (?, ?, datetime('now'), 0)
+            ''', (user_id, message))
+            conn.commit()
 
 
 def register_routes(app):
+    booking_subject = BookingSubject()
+    booking_subject.attach(InAppNotification())
+
     @app.route("/")
     def home():
         return render_template("index.html")
+
 
     @app.route("/booking/<int:car_id>", methods=["GET", "POST"])
     def booking(car_id):
@@ -558,6 +590,12 @@ def register_routes(app):
             flash("Message sent successfully!")
         except Exception as e:
             flash(f"Error sending message: {str(e)}")
+        
+        booking_subject.notify(
+            f"New message from {UserSession.get_instance().email}.",
+            receiver_id
+        )     
+
         return redirect(url_for("inbox"))
     
     @app.route("/send_reply/<int:receiver_id>", methods=["POST"])
@@ -583,6 +621,12 @@ def register_routes(app):
             flash("Reply sent!")
         except Exception as e:
             flash(f"Error sending reply: {str(e)}")
+
+        booking_subject.notify(
+            f"New message from {UserSession.get_instance().email}.",
+            receiver_id
+        )
+
         return redirect(url_for("message_thread", user_id=receiver_id))
     
     @app.route("/get_user_id/<username>")
@@ -662,6 +706,9 @@ def register_routes(app):
 
                     conn.commit()
 
+                    booking_subject.notify("Your booking has been confirmed!", pending["renter_id"])
+                    booking_subject.notify("Someone booked your car!", pending["owner_id"])
+
                     # Execute payment via proxy (optional design pattern hook)
                     proxy = PaymentProxy()
                     proxy.pay(
@@ -669,13 +716,12 @@ def register_routes(app):
                         receiver_id=pending["owner_id"],
                         amount=amount_due
                     )
-
+                    
                     session.pop("pending_booking", None)
                     flash(f"Payment of ${amount_due:.2f} successful! Remaining balance: ${balance - amount_due:.2f}")
                     return redirect(url_for("dashboard"))
-
                 return render_template("payment.html", booking_id="pending", amount=amount_due, balance=balance)
-
+            
         except Exception as e:
             flash(f"Payment failed: {str(e)}")
             return redirect(url_for("dashboard"))
@@ -844,6 +890,8 @@ def register_routes(app):
                         VALUES (?, ?, ?, ?, ?)
                     ''', (booking_id, reviewer_id, reviewee_id, rating, comment))
                     conn.commit()
+                
+                    booking_subject.notify(f"You received a new review from {UserSession.get_instance().email}!", reviewee_id)
 
                     flash("Review submitted!")
                     return redirect(url_for("dashboard"))
@@ -891,6 +939,8 @@ def register_routes(app):
                         VALUES (?, ?, ?, ?, ?)
                     ''', (booking_id, reviewer_id, reviewee_id, rating, comment))
                     conn.commit()
+                
+                    booking_subject.notify(f"You received a new review from {UserSession.get_instance().email}!", reviewee_id)
 
                     flash("Review for renter submitted!")
                     return redirect(url_for("dashboard"))
@@ -928,7 +978,21 @@ def register_routes(app):
         except Exception as e:
             flash(f"Error fetching reviews: {str(e)}")
         return render_template("reviews_received.html", reviews=reviews)
+    
+    @app.route("/notifications")
+    def notifications():
+        if not UserSession.get_instance().is_authenticated():
+            flash("Please log in to view notifications.")
+            return redirect(url_for("login"))
+        
+        user_id = UserSession.get_instance().user_id
+        with sqlite3.connect("database.db") as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM notifications WHERE user_id = ? ORDER BY timestamp DESC", (user_id,))
+            notes = cursor.fetchall()
 
+        return render_template("notifications.html", notifications=notes)
 
     @app.route("/search")
     def search():
